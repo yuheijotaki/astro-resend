@@ -1,0 +1,53 @@
+---
+import { Resend } from "resend";
+const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
+const RESEND_MAIL_FROM = import.meta.env.RESEND_MAIL_FROM;
+
+const resend = new Resend(RESEND_API_KEY);
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const name = data.get("name") as string;
+    const email = data.get("email") as string;
+    const subject = `Resend mail on (${new Date()})`;
+    const html = `Name: ${name} <br> Email: ${email}`;
+    const body = {
+      from: RESEND_MAIL_FROM,
+      to: email,
+      subject: subject,
+      html: html,
+    };
+
+    resend.emails.send(body);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
+  }
+}
+---
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
+  </head>
+  <body>
+    <h1>Form</h1>
+    <form method="POST">
+      <label>
+        Name:
+        <input type="text" name="name" required />
+      </label>
+      <label>
+        Email:
+        <input type="email" name="email" required />
+      </label>
+      <button>Submit</button>
+    </form>
+  </body>
+</html>
