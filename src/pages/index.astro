@@ -65,9 +65,7 @@ if (Astro.request.method === "POST") {
         {
           issues
             .filter((issue) => issue.path[0] === "name")
-            .map((issue, index) => (
-              <p key={`nameError${index}`}>{issue.message}</p>
-            ))
+            .map((issue, index) => <p>{`${index + 1}. ${issue.message}`}</p>)
         }
       </div>
       <div>
@@ -82,9 +80,7 @@ if (Astro.request.method === "POST") {
         {
           issues
             .filter((issue) => issue.path[0] === "email")
-            .map((issue, index) => (
-              <p key={`emailError${index}`}>{issue.message}</p>
-            ))
+            .map((issue, index) => <p>{`${index + 1}. ${issue.message}`}</p>)
         }
       </div>
       <div>
@@ -94,9 +90,7 @@ if (Astro.request.method === "POST") {
         {
           issues
             .filter((issue) => issue.path[0] === "comment")
-            .map((issue, index) => (
-              <p key={`commentError${index}`}>{issue.message}</p>
-            ))
+            .map((issue, index) => <p>{`${index + 1}. ${issue.message}`}</p>)
         }
       </div>
       <div>
