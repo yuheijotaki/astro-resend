@@ -1,25 +1,48 @@
 ---
 import { Resend } from "resend";
+import z from "zod";
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 const RESEND_MAIL_FROM = import.meta.env.RESEND_MAIL_FROM;
-
 const resend = new Resend(RESEND_API_KEY);
+
+let issues: z.ZodIssue[] = [];
+let nameInput = "";
+let emailInput = "";
+let commentInput = "";
 
 if (Astro.request.method === "POST") {
   try {
     const data = await Astro.request.formData();
     const name = data.get("name") as string;
     const email = data.get("email") as string;
-    const subject = `Resend mail on (${new Date()})`;
-    const html = `Name: ${name} <br> Email: ${email}`;
-    const body = {
-      from: RESEND_MAIL_FROM,
-      to: email,
-      subject: subject,
-      html: html,
-    };
+    const comment = data.get("comment") as string;
+    nameInput = name;
+    emailInput = email;
+    commentInput = comment;
 
-    resend.emails.send(body);
+    const result = z
+      .object({
+        name: z.string(),
+        email: z.string().email(),
+        comment: z.string(),
+      })
+      .safeParse({ name, email, comment });
+
+    if (result.success) {
+      const subject = `Resend mail on (${new Date()})`;
+      const html = `Name: ${name} <br> Email: ${email} <br> Comment: ${comment}`;
+      const body = {
+        from: RESEND_MAIL_FROM,
+        to: email,
+        subject: subject,
+        html: html,
+      };
+      resend.emails.send(body);
+      return Astro.redirect("/complete");
+    } else {
+      issues = result.error.errors;
+      Astro.response.status = 400;
+    }
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message);
@@ -38,13 +61,56 @@ if (Astro.request.method === "POST") {
     <form method="POST">
       <div>
         <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required />
+        <input type="text" id="name" name="name" value={nameInput} required />
+        {
+          issues
+            .filter((issue) => issue.path[0] === "name")
+            .map((issue, index) => (
+              <p key={`nameError${index}`}>{issue.message}</p>
+            ))
+        }
       </div>
       <div>
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required />
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value={emailInput}
+          required
+        />
+        {
+          issues
+            .filter((issue) => issue.path[0] === "email")
+            .map((issue, index) => (
+              <p key={`emailError${index}`}>{issue.message}</p>
+            ))
+        }
       </div>
-      <button type="submit">Submit</button>
+      <div>
+        <label for="comment">Comment:</label>
+        <textarea id="comment" name="comment" value={commentInput} required
+        ></textarea>
+        {
+          issues
+            .filter((issue) => issue.path[0] === "comment")
+            .map((issue, index) => (
+              <p key={`commentError${index}`}>{issue.message}</p>
+            ))
+        }
+      </div>
+      <div>
+        <button type="submit">Submit</button>
+      </div>
     </form>
   </body>
 </html>
+
+<style>
+  body {
+    margin: 2rem;
+  }
+  label {
+    display: block;
+  }
+</style>
